@@ -28,6 +28,7 @@ class _HomeState extends State<Home> {
     return Scaffold(
       backgroundColor: tdBGColor,
       appBar: _buildAppBar(),
+      drawer: _sideBar(),
       body: Stack(
         children: [
           Container(
@@ -124,7 +125,10 @@ class _HomeState extends State<Home> {
   void _addToDoItem(String todo)
   {
     setState(() {
-      toDosList.add(ToDo(id: DateTime.now().microsecondsSinceEpoch.toString(), toDoText: todo));
+      if(todo.isNotEmpty)
+      {
+        toDosList.add(ToDo(id: DateTime.now().microsecondsSinceEpoch.toString(), toDoText: todo));
+      }
     });
 
     _toDoController.clear();
@@ -174,13 +178,31 @@ class _HomeState extends State<Home> {
     return AppBar(
       backgroundColor: tdBGColor,
       elevation: 0,
-      title: Row(children: [
-        Icon(
-          Icons.menu,
-          color: tdBlack,
-          size: 30
-        )
-      ])
+    );
+  }
+
+  Drawer _sideBar()
+  {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.grey),
+            child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24),)
+          ),
+          ListTile(
+            leading: Icon(Icons.home),
+            title: Text('Home'),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.settings),
+            title: Text('Settings'),
+            onTap: () {},
+          ),
+        ],
+      ),
     );
   }
 }
