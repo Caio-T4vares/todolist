@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:my_todo_list/model/group.dart';
 import '../model/todo.dart';
 
@@ -11,7 +12,9 @@ class HomeController extends GetxController {
   var toDos = [].obs;
   final toDoController = TextEditingController();
   final groupController = TextEditingController();
-
+  final toDoNameController = TextEditingController();
+  final toDoDescriptionController = TextEditingController();
+  final toDoDateController = TextEditingController();
   @override
   void onInit() {
     super.onInit();
@@ -97,4 +100,26 @@ class HomeController extends GetxController {
     toDos.refresh();
     update();
   }
+
+  Future<void> selectDate(ToDo todo) async {
+    DateTime? pickedDate = await showDatePicker(
+        context: Get.context!,
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2025),
+        helpText: "Select the deadline for you ToDo.",
+        cancelText: "Cancel",
+        confirmText: "Chose deadline",
+        fieldHintText: "Day/Month/Year",
+        errorFormatText: "Enter valid date",
+        errorInvalidText: "Enter valid range date");
+    if (pickedDate != null && pickedDate != todo.deadline) {
+      toDoDateController.text =
+          DateFormat("dd-MM-yyyy").format(pickedDate).toString();
+    }
+    selectedGroup.refresh();
+    toDos.refresh();
+    update();
+  }
+
+  void confirmChanges() {}
 }

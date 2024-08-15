@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_todo_list/constants/colors.dart';
-
+import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
 import '../model/todo.dart';
 
@@ -18,6 +18,7 @@ class ToDoItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: ListTile(
+        onLongPress: () => _showToDoDetails(todo),
         onTap: () {
           controller.changeToDoStatus(todo);
         },
@@ -53,5 +54,66 @@ class ToDoItem extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _showToDoDetails(ToDo todo) {
+    controller.toDoNameController.text = todo.toDoText;
+    controller.toDoDescriptionController.text =
+        todo.description == null ? "" : todo.description!;
+    controller.toDoDateController.text = todo.deadline == null
+        ? ""
+        : DateFormat("dd-MM-yyyy").format(todo.deadline!).toString();
+    Get.dialog(Dialog(
+      alignment: Alignment.center,
+      child: SizedBox(
+        height: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(
+              height: 30,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'ToDo name',
+                ),
+                controller: controller.toDoNameController,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                ),
+                controller: controller.toDoDescriptionController,
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                    labelText: "Date",
+                    filled: true,
+                    prefixIcon: Icon(Icons.calendar_today),
+                    enabledBorder:
+                        OutlineInputBorder(borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: tdBlue))),
+                readOnly: true,
+                controller: controller.toDoDateController,
+                onTap: () => controller.selectDate(todo),
+              ),
+            ),
+            TextButton(
+                onPressed: () => controller.confirmChanges(),
+                child: const Text("Confirm"))
+          ],
+        ),
+      ),
+    ));
   }
 }
