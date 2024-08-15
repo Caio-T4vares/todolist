@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:my_todo_list/pages/home.dart';
 
 void main() {
@@ -11,10 +12,11 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'ToDo App',
-      home: Home(),
+      initialRoute: "/home",
+      getPages: [GetPage(name: "/home", page: () => Home())],
     );
   }
 }

@@ -1,6 +1,6 @@
 class ToDo {
-  String? id;
-  String? toDoText;
+  String id;
+  String toDoText;
   bool isDone;
   // adicionar lista a que pertence (as listas podem ser string e guardadas em uma lista de string)
   // adicionar possivel data limite "DateTime?"

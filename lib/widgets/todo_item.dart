@@ -29,7 +29,7 @@ class ToDoItem extends StatelessWidget {
           color: tdBlue,
         ),
         title: Text(
-          todo.toDoText!,
+          todo.toDoText,
           style: TextStyle(
               fontSize: 16,
               color: tdBlack,
@@ -47,7 +47,7 @@ class ToDoItem extends StatelessWidget {
             iconSize: 18,
             icon: const Icon(Icons.delete),
             onPressed: () {
-              controller.deleteToDo(todo.id!);
+              controller.deleteToDo(todo.id);
             },
           ),
         ),
