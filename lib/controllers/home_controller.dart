@@ -10,6 +10,7 @@ class HomeController extends GetxController {
   RxList<Group> groupList = <Group>[].obs; // sao as listas de todo
   var selectedGroup = Group(id: "id", name: "name", myToDos: []).obs;
   var toDos = [].obs;
+  DateTime? choosedDate;
   final toDoController = TextEditingController();
   final groupController = TextEditingController();
   final toDoNameController = TextEditingController();
@@ -105,7 +106,7 @@ class HomeController extends GetxController {
     DateTime? pickedDate = await showDatePicker(
         context: Get.context!,
         firstDate: DateTime.now(),
-        lastDate: DateTime(2025),
+        lastDate: DateTime(2028),
         helpText: "Select the deadline for you ToDo.",
         cancelText: "Cancel",
         confirmText: "Chose deadline",
@@ -115,11 +116,19 @@ class HomeController extends GetxController {
     if (pickedDate != null && pickedDate != todo.deadline) {
       toDoDateController.text =
           DateFormat("dd-MM-yyyy").format(pickedDate).toString();
+      choosedDate = pickedDate;
     }
     selectedGroup.refresh();
     toDos.refresh();
     update();
   }
 
-  void confirmChanges() {}
+  void confirmChanges(ToDo todo) {
+    todo.deadline = choosedDate;
+    todo.description = toDoDescriptionController.text;
+    todo.toDoText = toDoNameController.text;
+    selectedGroup.refresh();
+    toDos.refresh();
+    update();
+  }
 }

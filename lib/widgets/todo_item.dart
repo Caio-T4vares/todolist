@@ -52,17 +52,25 @@ class ToDoItem extends StatelessWidget {
             },
           ),
         ),
+        subtitle: Text(
+          todo.deadline == null ? "" : formatDate(todo.deadline!),
+          style: const TextStyle(color: tdBlue),
+        ),
+        titleAlignment: ListTileTitleAlignment.center,
       ),
     );
+  }
+
+  String formatDate(DateTime date) {
+    return DateFormat("dd-MM-yyyy").format(date).toString();
   }
 
   void _showToDoDetails(ToDo todo) {
     controller.toDoNameController.text = todo.toDoText;
     controller.toDoDescriptionController.text =
         todo.description == null ? "" : todo.description!;
-    controller.toDoDateController.text = todo.deadline == null
-        ? ""
-        : DateFormat("dd-MM-yyyy").format(todo.deadline!).toString();
+    controller.toDoDateController.text =
+        todo.deadline == null ? "" : formatDate(todo.deadline!);
     Get.dialog(Dialog(
       alignment: Alignment.center,
       child: SizedBox(
@@ -109,7 +117,10 @@ class ToDoItem extends StatelessWidget {
               ),
             ),
             TextButton(
-                onPressed: () => controller.confirmChanges(),
+                onPressed: () {
+                  controller.confirmChanges(todo);
+                  Get.back();
+                },
                 child: const Text("Confirm"))
           ],
         ),
