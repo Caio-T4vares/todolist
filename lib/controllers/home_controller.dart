@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_todo_list/model/group.dart';
+import '../local_notifications.dart';
 import '../model/todo.dart';
 
 class HomeController extends GetxController {
@@ -25,6 +28,7 @@ class HomeController extends GetxController {
     ].obs;
     selectedGroup.value = groupList[0];
     toDos.value = selectedGroup.value.myToDos;
+    listenToNotifications();
   }
 
   void addToDo(String text) {
@@ -92,8 +96,10 @@ class HomeController extends GetxController {
 
   void filterToDos(String toDosFilterName) {
     if (toDosFilterName.isNotEmpty) {
+      String toDosFilterNameLowerCased = toDosFilterName.toLowerCase();
       toDos.value = selectedGroup.value.myToDos
-          .where((todo) => todo.toDoText.contains(RegExp("^$toDosFilterName")))
+          .where((todo) =>
+              todo.toDoText.contains(RegExp("^$toDosFilterNameLowerCased")))
           .toList();
     } else {
       toDos.value = selectedGroup.value.myToDos;
@@ -124,11 +130,31 @@ class HomeController extends GetxController {
   }
 
   void confirmChanges(ToDo todo) {
+    if (choosedDate != null) {
+      int daysUntilDeadline = choosedDate!.difference(DateTime.now()).inDays;
+      Duration timeToNotify = Duration(
+          days: daysUntilDeadline,
+          seconds:
+              5); // os segundos são só para o caso de a task ser no mesmo dia.
+      LocalNotifications.showScheduleNotification(
+          title: "The deadline of your ToDo '${todo.toDoText}' is coming.",
+          body: "Your ToDo expires today",
+          payload: "payload",
+          dayToNotify: timeToNotify);
+    }
     todo.deadline = choosedDate;
     todo.description = toDoDescriptionController.text;
     todo.toDoText = toDoNameController.text;
     selectedGroup.refresh();
     toDos.refresh();
     update();
+  }
+
+  listenToNotifications() {
+    print("Listening to notification");
+    LocalNotifications.onClickNotification.stream.listen((event) {
+      print(event);
+      Get.toNamed('/home', arguments: event);
+    });
   }
 }
