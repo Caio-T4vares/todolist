@@ -8,20 +8,16 @@ import '../model/todo.dart';
 class ToDoItem extends StatelessWidget {
   final ToDo todo;
 
-  ToDoItem({
-    super.key,
-    required this.todo,
-  });
+  ToDoItem({super.key,required this.todo,});
   final HomeController controller = Get.find<HomeController>();
+
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: ListTile(
         onLongPress: () => _showToDoDetails(todo),
-        onTap: () {
-          controller.changeToDoStatus(todo);
-        },
+        onTap: () => controller.changeToDoStatus(todo),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         tileColor: Colors.white,
@@ -52,9 +48,8 @@ class ToDoItem extends StatelessWidget {
             },
           ),
         ),
-        subtitle: Text(
-          todo.deadline == null ? "" : formatDate(todo.deadline!),
-          style: const TextStyle(color: tdBlue),
+        subtitle: todo.deadline == null ? null : Text(
+          formatDate(todo.deadline!), style: const TextStyle(color: tdBlue),
         ),
         titleAlignment: ListTileTitleAlignment.center,
       ),

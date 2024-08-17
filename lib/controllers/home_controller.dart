@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+
 import 'package:get/get.dart';
 import 'package:get/state_manager.dart';
 import 'package:flutter/material.dart';
@@ -16,15 +20,47 @@ class HomeController extends GetxController {
   final toDoNameController = TextEditingController();
   final toDoDescriptionController = TextEditingController();
   final toDoDateController = TextEditingController();
+
   @override
   void onInit() {
     super.onInit();
-    groupList = [
-      Group(id: "1", name: "Work", myToDos: []),
-      Group(id: "2", name: "Personal", myToDos: [])
-    ].obs;
-    selectedGroup.value = groupList[0];
-    toDos.value = selectedGroup.value.myToDos;
+    loadGroups();
+  }
+
+  Future<String> get _localPath async {
+    final dir = await getApplicationDocumentsDirectory();
+    return dir.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/groups.json');
+  }
+
+  Future<void> saveGroups() async {
+    final file = await _localFile;
+    List<Map<String, dynamic>> jsonGroups = groupList.map((group) => group.toJson()).toList();
+    await file.writeAsString(jsonEncode(jsonGroups));
+  }
+
+  Future<void> loadGroups() async {
+    try {
+      final file = await _localFile;
+
+      if(file.existsSync()) {
+        String jsonString = await file.readAsString();
+        List<dynamic> jsonData = jsonDecode(jsonString);
+
+        groupList.value = jsonData.map((item) => Group.fromJson(item)).toList();
+        if(groupList.isNotEmpty) {
+          selectedGroup.value = groupList[0];
+          toDos.value = selectedGroup.value.myToDos;
+        }
+      }
+    }
+    catch(e) {
+      print("Falha para carregar os grupos: $e");
+    }
   }
 
   void addToDo(String text) {
@@ -33,6 +69,7 @@ class HomeController extends GetxController {
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           toDoText: text));
     }
+    saveGroups();
     toDos.refresh();
     selectedGroup.refresh();
     toDoController.clear();
@@ -43,6 +80,7 @@ class HomeController extends GetxController {
     if (id.isNotEmpty) {
       selectedGroup.value.myToDos.removeWhere((todo) => todo.id == id);
     }
+    //saveGroups();
     toDos.refresh();
     selectedGroup.refresh();
     update();
@@ -73,6 +111,7 @@ class HomeController extends GetxController {
           myToDos: []);
       groupList.add(newGroup);
       selectedGroup.value = newGroup;
+      saveGroups();
       toDos.refresh();
       groupController.clear();
       groupList.refresh();
@@ -85,6 +124,7 @@ class HomeController extends GetxController {
           groupList.firstWhere((grp) => grp.id != removedGroup.id);
     }
     groupList.removeWhere((grp) => grp.id == removedGroup.id);
+    saveGroups();
     selectedGroup.refresh();
     toDos.refresh();
     update();

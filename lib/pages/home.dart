@@ -16,36 +16,42 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: tdBGColor,
-      appBar: AppBar(), //_buildAppBar(),
+      appBar: AppBar(backgroundColor: tdBGColor, elevation: 0),
       drawer: sideBar(),
-      body: Stack(
+      body: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            color: tdBGColor,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: Column(
               children: [
                 searchBar(),
-                Container(
-                  margin: const EdgeInsets.only(top: 30, bottom: 25),
-                  child: Obx(() => Text(
-                        '${controller.selectedGroup.value.name} ToDos',
-                        style: const TextStyle(
-                            fontSize: 30, fontWeight: FontWeight.w500),
-                      )),
+                SizedBox(height: 20,),
+                Obx(() => 
+                  Text(
+                    controller.selectedGroup.value.name != 'name'
+                        ? controller.selectedGroup.value.name
+                        : 'No Groups',
+                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500),
+                  ),
                 ),
-                Expanded(
-                    child: Container(
-                  margin: const EdgeInsets.only(top: 20),
-                  child: Obx(() => ListView.builder(
-                        itemBuilder: (BuildContext context, int index) {
-                          final ToDo todo = controller.toDos[index];
-                          return ToDoItem(todo: todo);
-                        },
-                        itemCount: controller.toDos.length,
-                      )),
-                ))
+                SizedBox(height: 20,)
               ],
             ),
+          ),
+          Expanded(
+            child: Obx(() =>
+              ListView.builder(
+                itemBuilder: (context, index) {
+                  final ToDo todo = controller.toDos[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ToDoItem(todo: todo),
+                  );
+                },
+                itemCount: controller.toDos.length,
+              ),
+            ), 
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -53,24 +59,23 @@ class Home extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    margin:
-                        const EdgeInsets.only(bottom: 20, right: 20, left: 20),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    margin: EdgeInsets.only(bottom: 20, right: 20, left: 20),
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                     decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: const [
-                          BoxShadow(
-                              color: Colors.grey,
-                              offset: Offset(0.0, 0.0),
-                              blurRadius: 10.0,
-                              spreadRadius: 0.0)
-                        ],
-                        borderRadius: BorderRadius.circular(10)),
+                      color: Colors.white,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          offset: Offset(0.0, 0.0),
+                          blurRadius: 10.0,
+                          spreadRadius: 0.0
+                        ),
+                      ],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: TextField(
                       controller: controller.toDoController,
-                      decoration: const InputDecoration(
-                          hintText: 'Add new item', border: InputBorder.none),
+                      decoration: const InputDecoration(hintText: 'Add new Item', border: InputBorder.none),
                     ),
                   ),
                 ),
@@ -81,14 +86,13 @@ class Home extends StatelessWidget {
                       controller.addToDo(controller.toDoController.text);
                     },
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: tdBlue,
-                        minimumSize: const Size(60, 60),
-                        elevation: 10,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6))),
-                    child: const Text('+',
-                        style: TextStyle(fontSize: 40, color: Colors.white)),
-                  ),
+                      backgroundColor:  tdBlue,
+                      minimumSize: const Size(60,60),
+                      elevation: 10,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))
+                    ),
+                    child: const Text('+', style: TextStyle(fontSize: 40, color: Colors.white)),
+                  )
                 ),
               ],
             ),
