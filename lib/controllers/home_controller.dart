@@ -39,7 +39,8 @@ class HomeController extends GetxController {
 
   Future<void> saveGroups() async {
     final file = await _localFile;
-    List<Map<String, dynamic>> jsonGroups = groupList.map((group) => group.toJson()).toList();
+    List<Map<String, dynamic>> jsonGroups =
+        groupList.map((group) => group.toJson()).toList();
     await file.writeAsString(jsonEncode(jsonGroups));
   }
 
@@ -47,18 +48,29 @@ class HomeController extends GetxController {
     try {
       final file = await _localFile;
 
-      if(file.existsSync()) {
+      if (file.existsSync()) {
         String jsonString = await file.readAsString();
         List<dynamic> jsonData = jsonDecode(jsonString);
 
         groupList.value = jsonData.map((item) => Group.fromJson(item)).toList();
-        if(groupList.isNotEmpty) {
+        if (groupList.isEmpty) {
+          groupList.add(Group(
+              id: DateTime.now().millisecond.toString(),
+              name: "Work",
+              myToDos: []));
+          groupList.add(Group(
+              id: DateTime.now().millisecond.toString(),
+              name: "Personal",
+              myToDos: []));
+          saveGroups();
+          selectedGroup.value = groupList[0];
+          toDos.value = selectedGroup.value.myToDos;
+        } else {
           selectedGroup.value = groupList[0];
           toDos.value = selectedGroup.value.myToDos;
         }
       }
-    }
-    catch(e) {
+    } catch (e) {
       print("Falha para carregar os grupos: $e");
     }
   }
@@ -111,6 +123,7 @@ class HomeController extends GetxController {
           myToDos: []);
       groupList.add(newGroup);
       selectedGroup.value = newGroup;
+      toDos.value = selectedGroup.value.myToDos;
       saveGroups();
       toDos.refresh();
       groupController.clear();
@@ -121,7 +134,10 @@ class HomeController extends GetxController {
   void deleteGroup(Group removedGroup) {
     if (removedGroup.id == selectedGroup.value.id) {
       selectedGroup.value =
-          groupList.firstWhere((grp) => grp.id != removedGroup.id);
+          groupList.firstWhere((grp) => grp.id != removedGroup.id, orElse: () {
+        toDos.value = [];
+        return Group(id: "id", name: "name", myToDos: []);
+      });
     }
     groupList.removeWhere((grp) => grp.id == removedGroup.id);
     saveGroups();
