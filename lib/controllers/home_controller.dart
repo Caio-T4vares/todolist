@@ -131,16 +131,25 @@ class HomeController extends GetxController {
 
   void confirmChanges(ToDo todo) {
     if (choosedDate != null) {
-      int daysUntilDeadline = choosedDate!.difference(DateTime.now()).inDays;
-      Duration timeToNotify = Duration(
-          days: daysUntilDeadline,
-          seconds:
-              5); // os segundos são só para o caso de a task ser no mesmo dia.
+      int daysUntilDeadline = choosedDate!.day - DateTime.now().day;
+      int hoursUntilMidnight = 24 - DateTime.now().hour;
+      if (daysUntilDeadline == 0) {
+        Duration timeToNotify = const Duration(
+            seconds:
+                5); // os segundos são só para o caso de a task ser no mesmo dia.
+      } else {
+        Duration timeToNotify = Duration(
+            days: daysUntilDeadline - 1,
+            hours: hoursUntilMidnight,
+            seconds:
+                5); // os segundos são só para o caso de a task ser no mesmo dia.
+      }
       LocalNotifications.showScheduleNotification(
           title: "The deadline of your ToDo '${todo.toDoText}' is coming.",
           body: "Your ToDo expires today",
           payload: "payload",
-          dayToNotify: timeToNotify);
+          dayToNotify: timeToNotify,
+          id: todo.id.substring(3, 7));
     }
     todo.deadline = choosedDate;
     todo.description = toDoDescriptionController.text;

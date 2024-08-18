@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:timezone/data/latest.dart' as tz;
@@ -60,10 +62,11 @@ class LocalNotifications {
       {required String title,
       required String body,
       required String payload,
-      required Duration dayToNotify}) async {
+      required Duration dayToNotify,
+      required id}) async {
     tz.initializeTimeZones();
     await _flutterLocalNotificationsPlugin.zonedSchedule(
-        2,
+        int.parse(id),
         title,
         body,
         tz.TZDateTime.now(tz.local).add(dayToNotify),
