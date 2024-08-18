@@ -8,7 +8,10 @@ import '../model/todo.dart';
 class ToDoItem extends StatelessWidget {
   final ToDo todo;
 
-  ToDoItem({super.key,required this.todo,});
+  ToDoItem({
+    super.key,
+    required this.todo,
+  });
   final HomeController controller = Get.find<HomeController>();
 
   @override
@@ -48,9 +51,12 @@ class ToDoItem extends StatelessWidget {
             },
           ),
         ),
-        subtitle: todo.deadline == null ? null : Text(
-          formatDate(todo.deadline!), style: const TextStyle(color: tdBlue),
-        ),
+        subtitle: todo.deadline == null
+            ? null
+            : Text(
+                formatDate(todo.deadline!),
+                style: const TextStyle(color: tdBlue),
+              ),
         titleAlignment: ListTileTitleAlignment.center,
       ),
     );

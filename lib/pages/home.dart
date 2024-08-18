@@ -22,26 +22,31 @@ class Home extends StatelessWidget {
         children: [
           Container(
             color: tdBGColor,
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: Column(
               children: [
                 searchBar(),
-                SizedBox(height: 20,),
-                Obx(() => 
-                  Text(
+                const SizedBox(
+                  height: 20,
+                ),
+                Obx(
+                  () => Text(
                     controller.selectedGroup.value.name != 'name'
                         ? controller.selectedGroup.value.name
                         : 'No Groups',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.w500),
+                    style: const TextStyle(
+                        fontSize: 30, fontWeight: FontWeight.w500),
                   ),
                 ),
-                SizedBox(height: 20,)
+                const SizedBox(
+                  height: 20,
+                )
               ],
             ),
           ),
           Expanded(
-            child: Obx(() =>
-              ListView.builder(
+            child: Obx(
+              () => ListView.builder(
                 itemBuilder: (context, index) {
                   final ToDo todo = controller.toDos[index];
                   return Padding(
@@ -51,7 +56,7 @@ class Home extends StatelessWidget {
                 },
                 itemCount: controller.toDos.length,
               ),
-            ), 
+            ),
           ),
           Align(
             alignment: Alignment.bottomCenter,
@@ -59,41 +64,43 @@ class Home extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    margin: EdgeInsets.only(bottom: 20, right: 20, left: 20),
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+                    margin:
+                        const EdgeInsets.only(bottom: 20, right: 20, left: 20),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       boxShadow: const [
                         BoxShadow(
-                          color: Colors.grey,
-                          offset: Offset(0.0, 0.0),
-                          blurRadius: 10.0,
-                          spreadRadius: 0.0
-                        ),
+                            color: Colors.grey,
+                            offset: Offset(0.0, 0.0),
+                            blurRadius: 10.0,
+                            spreadRadius: 0.0),
                       ],
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: TextField(
                       controller: controller.toDoController,
-                      decoration: const InputDecoration(hintText: 'Add new Item', border: InputBorder.none),
+                      decoration: const InputDecoration(
+                          hintText: 'Add new Item', border: InputBorder.none),
                     ),
                   ),
                 ),
                 Container(
-                  margin: const EdgeInsets.only(bottom: 20, right: 20),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      controller.addToDo(controller.toDoController.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:  tdBlue,
-                      minimumSize: const Size(60,60),
-                      elevation: 10,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6))
-                    ),
-                    child: const Text('+', style: TextStyle(fontSize: 40, color: Colors.white)),
-                  )
-                ),
+                    margin: const EdgeInsets.only(bottom: 20, right: 20),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        controller.addToDo(controller.toDoController.text);
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: tdBlue,
+                          minimumSize: const Size(60, 60),
+                          elevation: 10,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6))),
+                      child: const Text('+',
+                          style: TextStyle(fontSize: 40, color: Colors.white)),
+                    )),
               ],
             ),
           ),
@@ -218,5 +225,17 @@ class Home extends StatelessWidget {
             hintStyle: TextStyle(color: tdGrey)),
       ),
     );
+  }
+}
+
+extension OffsetExtension on Offset {
+  Animation<Offset> mapToOffset() {
+    return Tween<Offset>(
+      begin: this,
+      end: this,
+    ).animate(CurvedAnimation(
+      parent: const AlwaysStoppedAnimation<double>(1.0),
+      curve: Curves.linear,
+    ));
   }
 }

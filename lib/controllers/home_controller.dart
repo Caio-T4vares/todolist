@@ -1,12 +1,13 @@
 import 'dart:convert';
+
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:get/get.dart';
-import 'package:get/state_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_todo_list/model/group.dart';
+import '../local_notifications.dart';
 import '../model/todo.dart';
 
 class HomeController extends GetxController {
@@ -25,6 +26,7 @@ class HomeController extends GetxController {
   void onInit() {
     super.onInit();
     loadGroups();
+    listenToNotifications();
   }
 
   Future<String> get _localPath async {
@@ -47,40 +49,38 @@ class HomeController extends GetxController {
   Future<void> loadGroups() async {
     try {
       final file = await _localFile;
-
       if (file.existsSync()) {
         String jsonString = await file.readAsString();
         List<dynamic> jsonData = jsonDecode(jsonString);
-
         groupList.value = jsonData.map((item) => Group.fromJson(item)).toList();
-        if (groupList.isEmpty) {
-          groupList.add(Group(
-              id: DateTime.now().millisecond.toString(),
-              name: "Work",
-              myToDos: []));
-          groupList.add(Group(
-              id: DateTime.now().millisecond.toString(),
-              name: "Personal",
-              myToDos: []));
-          saveGroups();
-          selectedGroup.value = groupList[0];
-          toDos.value = selectedGroup.value.myToDos;
-        } else {
+        if (groupList.isNotEmpty) {
           selectedGroup.value = groupList[0];
           toDos.value = selectedGroup.value.myToDos;
         }
+      } else {
+        groupList.add(Group(id: "general", name: "General", myToDos: []));
+        groupList.add(Group(id: "concluded", name: "Concluded", myToDos: []));
+        selectedGroup.value = groupList[0];
+        toDos.value = selectedGroup.value.myToDos;
+        saveGroups();
       }
     } catch (e) {
       print("Falha para carregar os grupos: $e");
     }
+    toDos.refresh();
+    selectedGroup.refresh();
+    groupList.refresh();
+    update();
   }
 
   void addToDo(String text) {
-    if (text.isNotEmpty) {
+    if (text.isNotEmpty && selectedGroup.value.name != "Concluded") {
       selectedGroup.value.myToDos.add(ToDo(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
-          toDoText: text));
+          toDoText: text,
+          previouslyGroupName: selectedGroup.value.name));
     }
+    sortToDos();
     saveGroups();
     toDos.refresh();
     selectedGroup.refresh();
@@ -92,14 +92,46 @@ class HomeController extends GetxController {
     if (id.isNotEmpty) {
       selectedGroup.value.myToDos.removeWhere((todo) => todo.id == id);
     }
-    //saveGroups();
+    sortToDos();
+    saveGroups();
     toDos.refresh();
     selectedGroup.refresh();
     update();
   }
 
   void changeToDoStatus(ToDo todo) {
-    todo.isDone = !todo.isDone;
+    if (!groupList.any((grp) => grp.name == todo.previouslyGroupName)) {
+      // se o grupo anterior não existe mais
+      Future.delayed(
+          const Duration(milliseconds: 500), () => deleteToDo(todo.id));
+      return;
+    }
+    if (selectedGroup.value.name == "Concluded") {
+      todo.isDone = !todo.isDone;
+      groupList
+          .firstWhere((grp) => grp.name == todo.previouslyGroupName)
+          .myToDos
+          .add(ToDo(
+              id: todo.id,
+              toDoText: todo.toDoText,
+              deadline: todo.deadline,
+              description: todo.description,
+              previouslyGroupName: todo.previouslyGroupName,
+              isDone: todo.isDone));
+    } else {
+      todo.isDone = !todo.isDone;
+      groupList.firstWhere((grp) => grp.name == "Concluded").myToDos.add(ToDo(
+          id: todo.id,
+          toDoText: todo.toDoText,
+          deadline: todo.deadline,
+          description: todo.description,
+          previouslyGroupName: todo.previouslyGroupName,
+          isDone: todo.isDone));
+    }
+    Future.delayed(
+        const Duration(milliseconds: 500), () => deleteToDo(todo.id));
+    saveGroups();
+
     toDos.refresh();
     selectedGroup.refresh();
     update();
@@ -109,6 +141,7 @@ class HomeController extends GetxController {
     Group newGrp = groupList.firstWhere((grp) => group.name == grp.name);
     selectedGroup.value = newGrp;
     toDos.value = selectedGroup.value.myToDos;
+    sortToDos();
     toDos.refresh();
     selectedGroup.refresh();
     groupList.refresh();
@@ -116,7 +149,9 @@ class HomeController extends GetxController {
   }
 
   void addGroup(String groupName) {
-    if (groupName.isNotEmpty) {
+    print(groupList.any((el) => el.name == groupName));
+    if (groupName.isNotEmpty && !groupList.any((el) => el.name == groupName)) {
+      // n pode add de mesmo nome
       Group newGroup = Group(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           name: groupName,
@@ -124,6 +159,7 @@ class HomeController extends GetxController {
       groupList.add(newGroup);
       selectedGroup.value = newGroup;
       toDos.value = selectedGroup.value.myToDos;
+
       saveGroups();
       toDos.refresh();
       groupController.clear();
@@ -132,15 +168,18 @@ class HomeController extends GetxController {
   }
 
   void deleteGroup(Group removedGroup) {
-    if (removedGroup.id == selectedGroup.value.id) {
-      selectedGroup.value =
-          groupList.firstWhere((grp) => grp.id != removedGroup.id, orElse: () {
-        toDos.value = [];
-        return Group(id: "id", name: "name", myToDos: []);
-      });
+    if (removedGroup.name != "Concluded") {
+      if (removedGroup.id == selectedGroup.value.id) {
+        selectedGroup.value = groupList
+            .firstWhere((grp) => grp.id != removedGroup.id, orElse: () {
+          toDos.value = [];
+          return Group(id: "id", name: "name", myToDos: []);
+        });
+      }
+      groupList.removeWhere((grp) => grp.id == removedGroup.id);
     }
-    groupList.removeWhere((grp) => grp.id == removedGroup.id);
     saveGroups();
+    groupList.refresh();
     selectedGroup.refresh();
     toDos.refresh();
     update();
@@ -148,8 +187,10 @@ class HomeController extends GetxController {
 
   void filterToDos(String toDosFilterName) {
     if (toDosFilterName.isNotEmpty) {
+      String toDosFilterNameLowerCased = toDosFilterName.toLowerCase();
       toDos.value = selectedGroup.value.myToDos
-          .where((todo) => todo.toDoText.contains(RegExp("^$toDosFilterName")))
+          .where((todo) =>
+              todo.toDoText.contains(RegExp("^$toDosFilterNameLowerCased")))
           .toList();
     } else {
       toDos.value = selectedGroup.value.myToDos;
@@ -180,11 +221,66 @@ class HomeController extends GetxController {
   }
 
   void confirmChanges(ToDo todo) {
+    if (choosedDate != null) {
+      int daysUntilDeadline = choosedDate!.day - DateTime.now().day;
+      int hoursUntilMidnight = 24 - DateTime.now().hour;
+      if (daysUntilDeadline == 0) {
+        Duration timeToNotify = const Duration(
+            seconds:
+                5); // os segundos são só para o caso de a task ser no mesmo dia.
+        LocalNotifications.showScheduleNotification(
+            title: "The deadline of your ToDo '${todo.toDoText}' is coming.",
+            body: "Your ToDo expires today",
+            payload: "payload",
+            dayToNotify: timeToNotify,
+            id: todo.id.substring(3, 7));
+      } else {
+        Duration timeToNotify = Duration(
+            days: daysUntilDeadline - 1,
+            hours: hoursUntilMidnight,
+            seconds:
+                5); // os segundos são só para o caso de a task ser no mesmo dia.
+        LocalNotifications.showScheduleNotification(
+            title: "The deadline of your ToDo '${todo.toDoText}' is coming.",
+            body: "Your ToDo expires today",
+            payload: "payload",
+            dayToNotify: timeToNotify,
+            id: todo.id.substring(3, 7));
+      }
+    }
     todo.deadline = choosedDate;
+    choosedDate = null;
     todo.description = toDoDescriptionController.text;
     todo.toDoText = toDoNameController.text;
+    sortToDos();
     selectedGroup.refresh();
     toDos.refresh();
     update();
+  }
+
+  void sortToDos() {
+    List<ToDo> newList = List.from(toDos);
+    newList.sort((a, b) {
+      if (a.deadline == null && b.deadline == null) {
+        return 0; // Se ambos são nulos, são iguais
+      } else if (a.deadline == null) {
+        return 1; // Se 'a' é nulo, ele vai para o final
+      } else if (b.deadline == null) {
+        return -1; // Se 'b' é nulo, 'a' vem antes
+      } else {
+        return a.deadline!
+            .compareTo(b.deadline!); // Comparar os valores não nulos
+      }
+    });
+    selectedGroup.value.myToDos = List.from(newList);
+    toDos.value = selectedGroup.value.myToDos;
+  }
+
+  listenToNotifications() {
+    print("Listening to notification");
+    LocalNotifications.onClickNotification.stream.listen((event) {
+      print(event);
+      Get.toNamed('/home', arguments: event);
+    });
   }
 }
