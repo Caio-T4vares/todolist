@@ -189,8 +189,10 @@ class HomeController extends GetxController {
     if (toDosFilterName.isNotEmpty) {
       String toDosFilterNameLowerCased = toDosFilterName.toLowerCase();
       toDos.value = selectedGroup.value.myToDos
-          .where((todo) =>
-              todo.toDoText.contains(RegExp("^$toDosFilterNameLowerCased")))
+          .where((todo){
+            String str = todo.toDoText.toLowerCase();
+            return str.contains(RegExp("^$toDosFilterNameLowerCased"));
+          })
           .toList();
     } else {
       toDos.value = selectedGroup.value.myToDos;
