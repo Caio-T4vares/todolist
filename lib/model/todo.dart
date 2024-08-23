@@ -4,7 +4,7 @@ class ToDo {
   bool isDone;
   String? description;
   DateTime? deadline;
-  String? previouslyGroupName;
+  String groupId;
   // adicionar lista a que pertence (as listas podem ser string e guardadas em uma lista de string)
   // adicionar possivel data limite "DateTime?"
   // adicionar descrição
@@ -14,7 +14,7 @@ class ToDo {
       this.isDone = false,
       this.description,
       this.deadline,
-      this.previouslyGroupName});
+      required this.groupId});
 
   Map<String, dynamic> toJson() {
     return {
@@ -23,7 +23,7 @@ class ToDo {
       'isDone': isDone,
       'description': description,
       'deadline': deadline?.toIso8601String(),
-      'previouslyGroupName': previouslyGroupName,
+      'groupId': groupId,
     };
   }
 
@@ -33,7 +33,7 @@ class ToDo {
       toDoText: json['toDoText'],
       isDone: json['isDone'],
       description: json['description'],
-      previouslyGroupName: json['previouslyGroupName'],
+      groupId: json['groupId'],
       deadline:
           json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
     );

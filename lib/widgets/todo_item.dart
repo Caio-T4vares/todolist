@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:my_todo_list/constants/colors.dart';
 import 'package:intl/intl.dart';
 import '../controllers/home_controller.dart';
+import '../model/group.dart';
 import '../model/todo.dart';
 
 class ToDoItem extends StatelessWidget {
@@ -19,13 +20,14 @@ class ToDoItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       child: ListTile(
-        onLongPress: () => _showToDoDetails(todo),
-        onTap: () => controller.changeToDoStatus(todo),
+        onTap: () => _showToDoDetails(todo),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
         tileColor: Colors.white,
-        leading: Icon(
-          todo.isDone ? Icons.check_box : Icons.check_box_outline_blank,
+        leading: IconButton(
+          onPressed: () => controller.changeToDoStatus(todo),
+          icon: Icon(
+              todo.isDone ? Icons.check_box : Icons.check_box_outline_blank),
           color: tdBlue,
         ),
         title: Text(
@@ -67,63 +69,98 @@ class ToDoItem extends StatelessWidget {
   }
 
   void _showToDoDetails(ToDo todo) {
+    controller.dropDownOption.value = todo.groupId;
     controller.toDoNameController.text = todo.toDoText;
     controller.toDoDescriptionController.text =
         todo.description == null ? "" : todo.description!;
     controller.toDoDateController.text =
         todo.deadline == null ? "" : formatDate(todo.deadline!);
-    Get.dialog(Dialog(
-      alignment: Alignment.center,
-      child: SizedBox(
-        height: 400,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(
-              height: 30,
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: const InputDecoration(
-                  labelText: 'ToDo name',
+    Get.dialog(PopScope(
+      onPopInvoked: (didPop) {
+        if (didPop) controller.dropDownOption.value = "";
+      },
+      child: Dialog(
+        alignment: Alignment.center,
+        child: SizedBox(
+          height: 400,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(
+                height: 30,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'ToDo name',
+                  ),
+                  controller: controller.toDoNameController,
                 ),
-                controller: controller.toDoNameController,
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Description',
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Description',
+                  ),
+                  controller: controller.toDoDescriptionController,
                 ),
-                controller: controller.toDoDescriptionController,
               ),
-            ),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: TextField(
-                decoration: const InputDecoration(
-                    labelText: "Date",
-                    filled: true,
-                    prefixIcon: Icon(Icons.calendar_today),
-                    enabledBorder:
-                        OutlineInputBorder(borderSide: BorderSide.none),
-                    focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: tdBlue))),
-                readOnly: true,
-                controller: controller.toDoDateController,
-                onTap: () => controller.selectDate(todo),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: TextField(
+                  decoration: const InputDecoration(
+                      labelText: "Date",
+                      filled: true,
+                      prefixIcon: Icon(Icons.calendar_today),
+                      enabledBorder:
+                          OutlineInputBorder(borderSide: BorderSide.none),
+                      focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: tdBlue))),
+                  readOnly: true,
+                  controller: controller.toDoDateController,
+                  onTap: () => controller.selectDate(todo),
+                ),
               ),
-            ),
-            TextButton(
-                onPressed: () {
-                  controller.confirmChanges(todo);
-                  Get.back();
-                },
-                child: const Text("Confirm"))
-          ],
+              Obx(() => Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: DropdownButton<String>(
+                      hint: Text(controller.dropDownOption.value.isEmpty
+                          ? 'Selected Group'
+                          : controller.dropDownOption.value),
+                      value: controller.dropDownOption.value.isEmpty
+                          ? null
+                          : controller.dropDownOption.value,
+                      items: controller.groupList.where((group) {
+                        if (group.name == "All ToDos" ||
+                            group.name == "Concluded") {
+                          return false;
+                        } else {
+                          return true;
+                        }
+                      }).map((Group group) {
+                        return DropdownMenuItem<String>(
+                          value: group.id,
+                          child: Text(group.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        controller.dropDownOption.value = value!;
+                      },
+                    ),
+                  )),
+              TextButton(
+                  onPressed: () {
+                    controller.confirmChanges(
+                        todo, controller.dropDownOption.value);
+                    Get.back();
+                  },
+                  child: const Text("Confirm"))
+            ],
+          ),
         ),
       ),
     ));
