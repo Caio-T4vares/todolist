@@ -14,6 +14,7 @@ class HomeController extends GetxController {
   // List<ToDo> todosList = <ToDo>[]; // são as todos exibidas
   RxList<Group> groupList = <Group>[].obs; // sao as listas de todo
   var selectedGroup = Group(id: "id", name: "name", myToDos: []).obs;
+  var dropDownOption = ''.obs;
   var toDos = [].obs;
   DateTime? choosedDate;
   final toDoController = TextEditingController();
@@ -73,19 +74,28 @@ class HomeController extends GetxController {
     update();
   }
 
-  void addToDo(String text) {
-    if (text.isNotEmpty && selectedGroup.value.name != "Concluded") {
-      selectedGroup.value.myToDos.add(ToDo(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          toDoText: text,
-          previouslyGroupName: selectedGroup.value.name));
+  void addToDo(ToDo todo, String groupSelected) {
+    if(todo.toDoText.isNotEmpty) {
+      Group? group = groupList.firstWhere((value) => value.id == groupSelected);
+
+      if(group.name != 'Concluded') {
+        todo.previouslyGroupName = group.name;
+        if(todo.deadline != null) {
+          group.myToDos.add(todo);
+          confirmChanges(todo);
+        }
+        else {
+          group.myToDos.add(todo);
+        }
+      }
+
+      sortToDos();
+      saveGroups();
+      toDos.refresh();
+      selectedGroup.refresh();
+      toDoController.clear();
+      update();
     }
-    sortToDos();
-    saveGroups();
-    toDos.refresh();
-    selectedGroup.refresh();
-    toDoController.clear();
-    update();
   }
 
   void deleteToDo(String id) {

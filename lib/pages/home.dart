@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 import '../constants/colors.dart';
 import '../model/group.dart';
@@ -64,33 +65,14 @@ class Home extends StatelessWidget {
               children: [
                 Expanded(
                   child: Container(
-                    margin:
-                        const EdgeInsets.only(bottom: 20, right: 20, left: 20),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      boxShadow: const [
-                        BoxShadow(
-                            color: Colors.grey,
-                            offset: Offset(0.0, 0.0),
-                            blurRadius: 10.0,
-                            spreadRadius: 0.0),
-                      ],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: TextField(
-                      controller: controller.toDoController,
-                      decoration: const InputDecoration(
-                          hintText: 'Add new Item', border: InputBorder.none),
-                    ),
+                    margin: const EdgeInsets.only(bottom: 20, right: 20, left: 20),
                   ),
                 ),
                 Container(
                     margin: const EdgeInsets.only(bottom: 20, right: 20),
                     child: ElevatedButton(
                       onPressed: () {
-                        controller.addToDo(controller.toDoController.text);
+                        _showAddToDoModal(context);
                       },
                       style: ElevatedButton.styleFrom(
                           backgroundColor: tdBlue,
@@ -107,6 +89,124 @@ class Home extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _showAddToDoModal(BuildContext context) {
+    controller.toDoNameController.text = "";
+    controller.toDoDescriptionController.text = "";
+    controller.toDoDateController.text = "";
+
+    Get.dialog(Dialog(
+      alignment: Alignment.center,
+      child: SizedBox(
+        height: 400,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(
+              height: 30,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'ToDo name',
+                ),
+                controller: controller.toDoNameController,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                ),
+                controller: controller.toDoDescriptionController,
+              ),
+            ),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: TextField(
+                decoration: const InputDecoration(
+                    labelText: "Date",
+                    filled: true,
+                    prefixIcon: Icon(Icons.calendar_today),
+                    enabledBorder:
+                        OutlineInputBorder(borderSide: BorderSide.none),
+                    focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: tdBlue))),
+                readOnly: true,
+                controller: controller.toDoDateController,
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                      context: Get.context!,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime(2028),
+                      helpText: "Select the deadline for you ToDo.",
+                      cancelText: "Cancel",
+                      confirmText: "Chose deadline",
+                      fieldHintText: "Day/Month/Year",
+                      errorFormatText: "Enter valid date",
+                      errorInvalidText: "Enter valid range date");
+                  if (pickedDate != null) {
+                    controller.toDoDateController.text = DateFormat("dd-MM-yyyy").format(pickedDate).toString();
+                    controller.choosedDate = pickedDate;
+                  }
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Obx(() {
+                return DropdownButton<String>(
+                  hint: Text(controller.dropDownOption.value.isEmpty ?
+                    'Selected Group' : 
+                    controller.dropDownOption.value
+                  ),
+                  value: controller.dropDownOption.value.isEmpty ?
+                    null : controller.dropDownOption.value,
+                  items: controller.groupList
+                    .where((group) => group.name != 'Concluded')
+                    .map((Group group) {
+                      return DropdownMenuItem<String>(
+                        value: group.id,
+                        child: Text(group.name),
+                      );
+                    }).toList(),
+                  onChanged: (value) {
+                    controller.dropDownOption.value = value!;
+                  },
+                );
+              }),
+            ),
+            TextButton(
+                onPressed: () {
+                  if(controller.choosedDate != null) {
+                    ToDo todo = ToDo(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      toDoText: controller.toDoNameController.text,
+                      description: controller.toDoDescriptionController.text,
+                      deadline: controller.choosedDate
+                    );
+                    controller.addToDo(todo, controller.dropDownOption.value);
+                    Get.back();
+                  }
+                  else {
+                    ToDo todo = ToDo(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      toDoText: controller.toDoNameController.text,
+                      description: controller.toDoDescriptionController.text
+                    );
+                    controller.addToDo(todo, controller.dropDownOption.value);
+                    Get.back();
+                  }
+                },
+              child: const Text("Confirm"))
+          ],
+        ),
+      ),
+    ));
   }
 
   void _confirmDeleteGroupModal(Group group) {
