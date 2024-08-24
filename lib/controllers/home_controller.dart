@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:get/get.dart';
@@ -106,17 +107,13 @@ class HomeController extends GetxController {
   void addToDo(ToDo todo) {
     if (todo.toDoText.isNotEmpty) {
       Group? group = groupList.firstWhere((grp) => grp.id == todo.groupId);
-      print(group.id);
-      print(group.name);
-      print(todo.groupId);
       if (group.id == selectedGroup.value.id) toDos.add(todo);
       allToDos.add(todo);
       if (todo.deadline != null) {
-        confirmChanges(todo, todo.groupId);
+        confirmChanges(todo);
       }
       sortToDos();
       saveTodos();
-      saveGroups();
       toDos.refresh();
       selectedGroup.refresh();
       toDoController.clear();
@@ -131,62 +128,45 @@ class HomeController extends GetxController {
       toDos.removeWhere((todo) => todo.id == id);
     }
     sortToDos();
-    saveGroups();
+    saveTodos();
     toDos.refresh();
     selectedGroup.refresh();
     update();
   }
 
   void changeToDoStatus(ToDo todo) {
-    // if (!groupList.any((grp) => grp.name == todo.previouslyGroupName)) {
-    //   // se o grupo anterior não existe mais
-    //   Future.delayed(
-    //       const Duration(milliseconds: 500), () => deleteToDo(todo.id));
-    //   return;
-    // }
-    // if (selectedGroup.value.name == "Concluded") {
-    //   todo.isDone = !todo.isDone;
-    //   groupList
-    //       .firstWhere((grp) => grp.name == todo.previouslyGroupName)
-    //       .myToDos
-    //       .add(ToDo(
-    //           id: todo.id,
-    //           toDoText: todo.toDoText,
-    //           deadline: todo.deadline,
-    //           description: todo.description,
-    //           previouslyGroupName: todo.previouslyGroupName,
-    //           isDone: todo.isDone));
-    // } else {
-    //   todo.isDone = !todo.isDone;
-    //   groupList.firstWhere((grp) => grp.name == "Concluded").myToDos.add(ToDo(
-    //       id: todo.id,
-    //       toDoText: todo.toDoText,
-    //       deadline: todo.deadline,
-    //       description: todo.description,
-    //       previouslyGroupName: todo.previouslyGroupName,
-    //       isDone: todo.isDone));
-    // }
-    // Future.delayed(
-    //     const Duration(milliseconds: 500), () => deleteToDo(todo.id));
-    // saveGroups();
+    todo.isDone = !todo.isDone;
+    Future.delayed(const Duration(milliseconds: 500), () {
+      // atualiza a lista
+      attList(selectedGroup.value);
+    });
+    saveGroups();
+    saveTodos();
+    toDos.refresh();
+    selectedGroup.refresh();
+    update();
+  }
 
-    // toDos.refresh();
-    // selectedGroup.refresh();
-    // update();
+  void attList(Group grp) {
+    if (grp.name == "All ToDos") {
+      toDos.value = List.from(allToDos.where((todo) => !todo.isDone).toList());
+    } else if (grp.name == "Concluded") {
+      toDos.value = allToDos.where((todo) => todo.isDone).toList();
+    } else {
+      toDos.value = allToDos.where((todo) {
+        if (todo.groupId == grp.id && !todo.isDone) {
+          return true;
+        } else {
+          return false;
+        }
+      }).toList();
+    }
   }
 
   void changeGroup(Group group) {
     Group newGrp = groupList.firstWhere((grp) => group.name == grp.name);
     selectedGroup.value = newGrp;
-    if (newGrp.name == "All ToDos") {
-      toDos.value = List.from(allToDos);
-    } else if (newGrp.name == "Concluded") {
-      toDos.value = allToDos.where((todo) => todo.isDone).toList();
-    } else {
-      toDos.value =
-          allToDos.where((todo) => todo.groupId == newGrp.id).toList();
-    }
-    //toDos.value = selectedGroup.value.myToDos;
+    attList(newGrp);
     sortToDos();
     toDos.refresh();
     selectedGroup.refresh();
@@ -195,7 +175,6 @@ class HomeController extends GetxController {
   }
 
   void addGroup(String groupName) {
-    print(groupList.any((el) => el.name == groupName));
     if (groupName.isNotEmpty && !groupList.any((el) => el.name == groupName)) {
       // n pode add de mesmo nome
       Group newGroup = Group(
@@ -203,9 +182,7 @@ class HomeController extends GetxController {
           name: groupName);
       groupList.add(newGroup);
       selectedGroup.value = newGroup;
-      toDos.value =
-          allToDos.where((todo) => todo.groupId == newGroup.id).toList();
-
+      attList(newGroup);
       saveGroups();
       toDos.refresh();
       groupController.clear();
@@ -266,7 +243,7 @@ class HomeController extends GetxController {
     update();
   }
 
-  void confirmChanges(ToDo todo, String groupId) {
+  void confirmChanges(ToDo todo) {
     if (choosedDate != null) {
       int daysUntilDeadline = choosedDate!.day - DateTime.now().day;
       int hoursUntilMidnight = 24 - DateTime.now().hour;
@@ -298,6 +275,11 @@ class HomeController extends GetxController {
     choosedDate = null;
     todo.description = toDoDescriptionController.text;
     todo.toDoText = toDoNameController.text;
+    String actualId = todo.groupId;
+    todo.groupId = dropDownOption.value;
+    if (actualId != dropDownOption.value) {
+      attList(selectedGroup.value);
+    }
     sortToDos();
     selectedGroup.refresh();
     toDos.refresh();

@@ -193,6 +193,7 @@ class Home extends StatelessWidget {
                         );
                       }).toList(),
                       onChanged: (value) {
+                        print(value);
                         controller.dropDownOption.value = value!;
                       },
                     );

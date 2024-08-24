@@ -148,14 +148,14 @@ class ToDoItem extends StatelessWidget {
                         );
                       }).toList(),
                       onChanged: (value) {
+                        print("valor: $value");
                         controller.dropDownOption.value = value!;
                       },
                     ),
                   )),
               TextButton(
                   onPressed: () {
-                    controller.confirmChanges(
-                        todo, controller.dropDownOption.value);
+                    controller.confirmChanges(todo);
                     Get.back();
                   },
                   child: const Text("Confirm"))
