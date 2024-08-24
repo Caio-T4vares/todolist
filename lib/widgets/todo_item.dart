@@ -90,7 +90,8 @@ class ToDoItem extends StatelessWidget {
                 height: 30,
               ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: TextField(
                   decoration: const InputDecoration(
                     labelText: 'ToDo name',
@@ -99,7 +100,8 @@ class ToDoItem extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                 child: TextField(
                   decoration: const InputDecoration(
                     labelText: 'Description',
@@ -155,7 +157,9 @@ class ToDoItem extends StatelessWidget {
                   )),
               TextButton(
                   onPressed: () {
-                    controller.confirmChanges(todo);
+                    if (controller.toDoNameController.text != "") {
+                      controller.confirmChanges(todo);
+                    }
                     Get.back();
                   },
                   child: const Text("Confirm"))
