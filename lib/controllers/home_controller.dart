@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'dart:io';
-import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:get/get.dart';
@@ -191,16 +190,19 @@ class HomeController extends GetxController {
   }
 
   void deleteGroup(Group removedGroup) {
-    if (removedGroup.name != "Concluded") {
+    if (removedGroup.name != "Concluded" && removedGroup.name != "All ToDos") {
       if (removedGroup.id == selectedGroup.value.id) {
         selectedGroup.value = groupList
             .firstWhere((grp) => grp.id != removedGroup.id, orElse: () {
-          toDos.value = [];
-          return Group(id: "id", name: "name");
+          return groupList[0];
         });
       }
-      groupList.removeWhere((grp) => grp.id == removedGroup.id);
+      allToDos.removeWhere((todo) =>
+          todo.groupId == removedGroup.id); // deleta as todos desse grupo
+      groupList
+          .removeWhere((grp) => grp.id == removedGroup.id); // deleta o grupo
     }
+    attList(selectedGroup.value);
     saveGroups();
     groupList.refresh();
     selectedGroup.refresh();
@@ -211,12 +213,18 @@ class HomeController extends GetxController {
   void filterToDos(String toDosFilterName) {
     if (toDosFilterName.isNotEmpty) {
       String toDosFilterNameLowerCased = toDosFilterName.toLowerCase();
-      // toDos.value = selectedGroup.value.myToDos.where((todo) {
-      //   String str = todo.toDoText.toLowerCase();
-      //   return str.contains(RegExp("^$toDosFilterNameLowerCased"));
-      // }).toList();
+      toDos.value = allToDos.where((todo) {
+        if (todo.groupId == selectedGroup.value.id ||
+            selectedGroup.value.name == "All ToDos" ||
+            selectedGroup.value.name == "Concluded") {
+          String str = todo.toDoText.toLowerCase();
+          return str.contains(RegExp("^$toDosFilterNameLowerCased"));
+        } else {
+          return false;
+        }
+      }).toList();
     } else {
-      //toDos.value = selectedGroup.value.myToDos;
+      attList(selectedGroup.value);
     }
     toDos.refresh();
     update();
